@@ -184,6 +184,8 @@ function sort(
 
 挿入ソート以外のソート関数を実装しなさい。また実装したアルゴリズムの入力の配列長 `n` に対する時間計算量を O-記法で説明しなさい。
 
+**参考**: [計算量](https://atcoder.jp/contests/apg4b/tasks/APG4b_w)
+
 **出題範囲**: 7.8.6.3
 
 ## 問題 7.8 💻📄
@@ -200,11 +202,11 @@ function sort(
 
 **出題範囲**: 7.10
 
-## 問題 7.10 💻🧪🖋️💪
+## 問題 7.10 💻🧪
 
 JavaScript の配列は動的配列である。一般的に動的配列は固定長の配列を用いて実装される。実際に作成してみよう。
 
-以下の `makeFixedSizeArray` は固定長の配列を返す関数だと考えなさい。この関数を用いて動的配列 `DynamicSizeArray` を作成しなさい。また動的配列の push の平均時間計算量を説明しなさい。
+以下の `makeFixedSizeArray` は固定長の配列を返す関数だと考えなさい。この関数を用いて動的配列 `DynamicSizeArray` を作成しなさい。
 
 ```js
 function makeFixedSizeArray(size) {
@@ -255,13 +257,40 @@ class DynamicSizeArray {
 ```js
 // this.array に空が無い場合は「再配置」を行う
 if (this.len >= this.array.length()) {
-  // 新しい固定長配列を作成して要素をコピー
+  // 新しい固定長配列を作成
   const old = this.array;
   this.array = makeFixedSizeArray(old.length() * 2);
+  // 古い配列 (old) の要素を新しい配列にコピー
   // ...
+}
+// ...
+```
+
+## 問題 7.11 🖋️
+
+7.10 で作成した動的配列の push の平均時間計算量を説明しなさい。またその結果を用いて以下の関数 `copyA` と `copyB` に対し、`array.length` を `n` とした時の時間計算量を求めなさい。
+
+```js
+function copyA(array) {
+  const result = Array(array.length);
+  for (let i = 0; i < array.length; i++) {
+    result[i] = array[i];
+  }
+  return result;
+}
+
+// NOTE: copyB よりも copyA の方が効率的に見えるが計算量の観点ではどうだろうか
+function copyB(array) {
+  const result = [];
+  for (const v of array) {
+    result.push(v);
+  }
+  return result;
 }
 ```
 
-ヒント: `push` を $`n`$ 回呼び出したとき、上記の実装では配列を倍々にしていくので再配置は $`log_2 n`$ 回。各再配置での要素のコピー回数は $`1, 2, 4, 8, ..., 2^{log_2 n}`$ 回。再配置の際のコピー回数の総和は $`2^0 + 2^1 + 2^2 + ... + 2^{log_2 n} = ...`$ (等比数列の和の公式を思い出すこと)。この値を $`n`$ で割れば各 `push` の平均時間計算量が求められる。
+ヒント: `push` を $`n`$ 回呼び出したとき、7.10 の実装では配列を倍々にしていくので再配置は $`log_2 n`$ 回発生する。各再配置で要素のコピーは $`1, 2, 4, 8, ..., 2^{log_2 n}`$ 回発生する。再配置の際にコピー回数の総和は $`2^0 + 2^1 + 2^2 + ... + 2^{log_2 n} = ...`$ (等比数列の和の公式を思い出すこと)。この値を $`n`$ で割れば各 `push` の平均時間計算量が求められる。
+
+**参考**: [計算量](https://atcoder.jp/contests/apg4b/tasks/APG4b_w)
 
 **出題範囲**: なし
