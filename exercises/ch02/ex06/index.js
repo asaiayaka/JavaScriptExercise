@@ -1,0 +1,2 @@
+// += で文字列にどんどん足していく。最後（100行目）も改行で終わるから、テストが .toBe(expected) で一致する
+export function fizzbuzz () { let result = ""; for (let i = 1; i <= 100; i++) { if (i % 15 === 0) { result += "FizzBuzz\n"; } else if (i % 3 === 0) { result += "Fizz\n"; } else if  (i % 5 === 0) { result += "Buzz\n"; } else { result += i + "\n"; }} return result;}
