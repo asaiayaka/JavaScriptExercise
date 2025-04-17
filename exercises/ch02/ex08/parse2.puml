@@ -1,0 +1,45 @@
+@startuml
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+skinparam nodeShape ellipse
+top to bottom direction
+
+node "Program" as Program
+
+node "VariableDeclaration\n(kind: let)" as VarDecl
+node "VariableDeclarator" as VarDeclarator
+node "Identifier\n(name: a)" as IdentifierA
+node "init: null" as InitNull
+
+node "ExpressionStatement" as ExprStmt1
+node "AssignmentExpression\n(operator: =)" as AssignExpr
+node "Identifier\n(name: a)" as IdentifierA2
+node "Literal\n(value: 3)" as Literal3
+
+node "ExpressionStatement" as ExprStmt2
+node "CallExpression" as CallExpr
+node "MemberExpression" as MemberExpr
+node "Identifier\n(object: console)" as Console
+node "Identifier\n(property: log)" as Log
+node "Arguments" as Args
+node "Identifier\n(name: a)" as ArgA
+
+Program --> VarDecl
+VarDecl --> VarDeclarator
+VarDeclarator --> IdentifierA
+VarDeclarator --> InitNull
+
+Program --> ExprStmt1
+ExprStmt1 --> AssignExpr
+AssignExpr --> IdentifierA2
+AssignExpr --> Literal3
+
+Program --> ExprStmt2
+ExprStmt2 --> CallExpr
+CallExpr --> MemberExpr
+MemberExpr --> Console
+MemberExpr --> Log
+CallExpr --> Args
+Args --> ArgA
+
+@enduml
