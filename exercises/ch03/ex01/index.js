@@ -16,3 +16,5 @@ console.log(-Infinity / NaN);
 // NaN
 // NaN
 // NaN
+
+// 全部の組み合わせを試すってことだったらしい、NaNとNaNとか
