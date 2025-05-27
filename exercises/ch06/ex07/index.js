@@ -1,5 +1,3 @@
-// 未完成
-
 /**
  * Object.assignと同等の動作をする関数
  * 
@@ -24,21 +22,21 @@ export function assign(target, ...sources) {
             continue;
         }
 
-        // ソースがプリミティブ型の場合でもObject(source)でラッパーを作成して処理する
-        const from = Object(true);
+        // ソースがプリミティブ型の場合でもObject(source)で変換してから処理する
+        const from = Object(source);
 
-        // --- 文字列キーのenumerable ownプロパティをコピー ---
+        // 自身のenumerableなSymbol keyのみをコピー
         for (const key of Object.keys(from)) {
             to[key] = from[key];
         }
 
-        // --- Symbolキーのenumerable ownプロパティもコピー ---
+        // 自身のenumerableな文字列キーのプロパティをコピー
         const symbols = Object.getOwnPropertySymbols(from);
         for (const sym of symbols) {
             const descriptor = Object.getOwnPropertyDescriptor(from, sym);
             // enumerableなsymbolプロパティのみをコピー
-            if (descriptor.enumerable) {
-                to[sym] = from[key];
+            if (descriptor && descriptor.enumerable) {
+                to[sym] = from[sym];
             }
         }
     }
