@@ -21,6 +21,7 @@
   },
   "type": "module",
   "dependencies": {
-    "acorn": "^8.14.1"
+    "acorn": "^8.14.1",
+    "grapheme-splitter": "^1.0.4"
   }
 }
