@@ -478,14 +478,15 @@ async function h4() {
 
 ## 問題 13.8 💻🧪
 
-`fetchFirstFileSize` および `fetchSumOfFileSizes` を async/await を使って書き直しなさい。
+問題13.4 の`fetchFirstFileSize` および `fetchSumOfFileSizes` を async/await を使って書き直しなさい。
 
 **出題範囲**: 13.3
 
-## 問題 13.9 🖋️
+## 問題 13.9 💻🖋️
 
 以下の各関数を実行すると何が出力されるか予想し実際に確認しなさい。
 またその理由を 2、3 行のテキスト、図のいずれかまたは両方で説明しなさい。テキスト・図は問題 13.2 を参考にしなさい。
+`i4` に関しては、コードを修正して `v` の最終結果が 10 となるコードを実装しなさい。
 
 ```js
 async function i1() {
@@ -548,64 +549,12 @@ async function i3() {
 }
 
 async function i4() {
-  // NOTE: i5, i6 との比較用 (直列に処理を実行したいものとする)
-  let p = Promise.resolve(null);
-  for (let i = 0; i < 5; ++i) {
-    p = p.then(() => wait((5 - i) * 1000).then(() => log(i)));
-  }
-  return p.then(() => log("COMPLETED"));
-}
-
-async function i5() {
-  // NOTE: このコードは期待通りの挙動をすると考えられるだろうか？(典型的なミス)
-  let p = Promise.resolve(null);
-  for (let i = 0; i < 5; ++i) {
-    p = p.then(wait((5 - i) * 1000).then(() => log(i)));
-  }
-  return p.then(() => log("COMPLETED"));
-}
-
-async function i6() {
-  return Promise.all(
-    [0, 1, 2, 3, 4].map((i) => wait((5 - i) * 1000).then(() => log(i)))
-  ).then(() => log("COMPLETED"));
-}
-
-async function i7() {
-  // NOTE: i8 との比較用
-  let v = 0;
-
-  // 1秒待った後に2秒間隔で value の値を更新
-  const p1 = async () => {
-    await wait1();
-    for (let i = 0; i < 5; i++) {
-      const next = v + 1;
-      v = next;
-      await wait2();
-    }
-  };
-
-  // 2秒間隔で value の値を更新
-  const p2 = async () => {
-    for (let i = 0; i < 5; i++) {
-      const next = v + 1;
-      v = next;
-      await wait2();
-    }
-  };
-
-  await Promise.all([p1(), p2()]);
-  log(v);
-}
-
-async function i8() {
   // NOTE: 複数の非同期処理が1つの変数に対し書き込みを行う場合、読み込みと書き込みの間に await が入るとどうなるだろうか
   let v = 0;
 
   const p1 = async () => {
     await wait1();
     for (let i = 0; i < 5; i++) {
-      // NOTE: value の読み込み (value + 1) と書き込み (value = ...) の間に await が...
       const next = v + 1;
       await wait2();
       v = next;
@@ -629,7 +578,7 @@ async function i8() {
 
 ## 問題 13.10 💻🧪
 
-`fetchSumOfFileSizes` を `Promise.all` を使って書き換え、ディレクトリ内のファイルサイズを同時並行で取得するようにしなさい。
+問題13.4 の`fetchSumOfFileSizes` を `Promise.all` を使って書き換え、ディレクトリ内のファイルサイズを同時並行で取得するようにしなさい。
 
 **注意**: `Promise.all` を使う時は注意すること (例えば Web API の呼び出しを並行に実行すると、数次第で何らかのエラーに繋がる可能性がある)
 
@@ -660,15 +609,24 @@ const resp = await retryWithExponentialBackoff(
 ```js
 setTimeout(() => console.log("Hello, world!"), 1000);
 
-async function longRunningButAsyncFunction() {
+async function longA() {
+  let count = 0;
   while (true) {
-    // NOTE: ループの中で凄く時間のかかる処理 (大きい行列の処理とか...) を実行していると想像して下さい。
-    // (適当な値で await するのが目的であり null に理由はない)
-    await null;
+    if ((++count % 1000) === 0) { console.log("A"); }
+    await Promise.resolve({})
   }
 }
 
-longRunningButAsyncFunction();
+async function longB() {
+  let count = 0;
+  while (true) {
+    if ((++count % 1000) === 0) { console.log("B"); }
+    await Promise.resolve({})
+  }
+}
+
+longA();
+longB();
 ```
 
 **出題範囲**: なし
