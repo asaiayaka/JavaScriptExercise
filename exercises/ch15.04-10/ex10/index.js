@@ -65,7 +65,7 @@ canvas.addEventListener("click", function (evt) {
 });
 
 // requestAnimationFrame によって一定間隔で更新・描画を行う
-// NOTE: リフレッシュレートの高い画面では速く実行される (これを防ぐ場合は下記の例を参照)
+// TODO: リフレッシュレートの高い画面では速く実行されてしまうため、以下を参考に更新頻度が常に一定となるようにしなさい
 // https://developer.mozilla.org/ja/docs/Web/API/Window/requestAnimationFrame
 function update() {
   grid = updateGrid(grid);

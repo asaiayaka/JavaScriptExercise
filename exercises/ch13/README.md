@@ -231,6 +231,40 @@ function f12() {
 }
 ```
 
+### 参考: 図解について
+解答を Markdown に記載する場合、 [mermaidのガントチャート](https://docs.mermaidchart.com/mermaid-oss/syntax/gantt.html) を利用することで実行タイミングの図を作成し、Github 上で表示することができる。
+
+Markdown の文中で以下のような記載をいれることで、
+````
+```mermaid
+gantt
+  title f1
+  dateFormat  s
+  axisFormat |
+    wait3 :w3, 0, 3s
+    logA  :l1, after w3, 0.2s
+    wait2 :w2, after l1, 2s
+    logB  :l2, after w2, 0.2s
+    wait1 :w1, after l2, 1s
+    logC  :l3, after w1, 0.2s
+```
+````
+
+以下のような図が生成される。
+
+```mermaid
+gantt
+  title f1
+  dateFormat  s
+  axisFormat |
+    wait3 :w3, 0, 3s
+    logA  :l1, after w3, 0.2s
+    wait2 :w2, after l1, 2s
+    logB  :l2, after w2, 0.2s
+    wait1 :w1, after l2, 1s
+    logC  :l3, after w1, 0.2s
+```
+
 **出題範囲**: 13.2
 
 ## 問題 13.3 💻🧪
@@ -267,10 +301,13 @@ mkdir("A")
   .then(() => console.log("COMPLETED"));
 ```
 
-同様にして以下の関数の Promise 版を作成しなさい:
+また、Node.js では [util.promisify 関数](https://nodejs.org/api/util.html#utilpromisifyoriginal)を利用することで、上記の `Promise` コンストラクタと同様の変換が可能である。
+
+以下の関数の Promise 版を、`Promise`コンストラクタ による変換および `promisify` 関数による変換、それぞれで作成しなさい:
 
 - [fs.readdir](https://nodejs.org/api/fs.html#fsreaddirpath-options-callback)
 - [fs.stat](https://nodejs.org/api/fs.html#fsstatpath-options-callback)
+
 
 **出題範囲**: 13.2
 

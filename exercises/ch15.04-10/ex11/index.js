@@ -24,6 +24,7 @@ function renderTodos(todos) {
     toggle.checked = todo.completed;
     destroy.addEventListener("click", () => {
       todos.splice(index, 1);
+      deleteTodo(todo.content);
       renderTodos(todos);
     });
 
@@ -46,3 +47,7 @@ form.addEventListener("submit", (e) => {
 window.addEventListener("hashchange", () => {
   // ここを実装してね
 });
+
+function deleteTodo(content) {
+  todos = todos.filter((t) => t.content !== content);
+}
