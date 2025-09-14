@@ -28,16 +28,29 @@
 
 ## 結果
 
-file:///C:/Users/r23600307/Desktop/exercises-public/exercises/ch13/ex07/index.js:10
-    log(e.message);
-    ^
+=== h1 ===
+A
+B
+C
+=== h2 ===
+=== h3 ===
+=== h4 ===
+X error
+file:///C:/Users/r23600307/Desktop/exercises-public/exercises/ch13/ex07/index.js:16
+function errX() { throw new Error("X error"); }
+                        ^
 
-ReferenceError: log is not defined
-    at h1 (file:///C:/Users/r23600307/Desktop/exercises-public/exercises/ch13/ex07/index.js:10:5)
-    at file:///C:/Users/r23600307/Desktop/exercises-public/exercises/ch13/ex07/index.js:44:1
-    at ModuleJob.run (node:internal/modules/esm/module_job:222:25)
-    at async ModuleLoader.import (node:internal/modules/esm/loader:323:24)
-    at async loadESM (node:internal/process/esm_loader:28:7)
-    at async handleMainPromise (node:internal/modules/run_main:113:12)
+Error: X error
+    at errX (file:///C:/Users/r23600307/Desktop/exercises-public/exercises/ch13/ex07/index.js:16:25)
+    at file:///C:/Users/r23600307/Desktop/exercises-public/exercises/ch13/ex07/index.js:44:5
+    at new Promise (<anonymous>)
+    at h3 (file:///C:/Users/r23600307/Desktop/exercises-public/exercises/ch13/ex07/index.js:43:3)
+    at file:///C:/Users/r23600307/Desktop/exercises-public/exercises/ch13/ex07/index.js:73:3
 
 Node.js v20.12.1
+
+## 結果の理由
+
+- h2
+  - new Promise(executor)のexecutor内でthrowがあれば、自動的にそのPromiseがreject状態になる
+  - そのrejectを後続の.catchが確実に拾えるので、log(e.message)が呼ばれ"X error"と出る
