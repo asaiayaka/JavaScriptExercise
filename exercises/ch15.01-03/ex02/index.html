@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>Dynamic Import Test</title>
+    </head>
+    <body>
+        <h1>動的インポートテスト</h1>
+        <p>このテキストが赤に変わる</p>
+
+        <script type="module">
+            async function changeTextColor() {
+                // 動的インポート
+                const { $ } = await import(
+                    "https://releases.jquery.com/git/jquery-git.module.min.js"
+                );
+
+                // ページ内のすべての要素の文字色を赤にする
+                $("*").css("color", "red");
+            }
+            changeTextColor();
+        </script>
+    </body>
+</html>

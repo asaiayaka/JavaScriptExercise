@@ -7,7 +7,8 @@
     "test:browser": "playwright test",
     "server": "serve",
     "lint": "eslint . --max-warnings=0",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:sri":"node test.mjs"
   },
   "author": "",
   "private": true,

@@ -1,0 +1,1 @@
+console.log("index.jsが読み込まれました")
