@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>危険なサイト</title>
+        <style>
+            body {          
+                background-color: #fff3f3;
+                color: #900;
+                font-family: sans-serif;
+                padding: 20px;
+            }
+            .warning {
+                font-size: 1.5em;
+                font-weight: bold;
+                color: red;
+                margin-bottom: 20px;
+            } 
+            .info-box {
+                background-color: #ffe0e0;
+                border: 2px solid red;
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            .disclaimer {
+                font-size: 0.9em;
+                color: #555;
+                margin-top: 40px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="warning">⚠️あなたのPCは危険にさらされています！</div>
+
+        <div class="info-box" id="infoBox">
+            <p>以下の情報が漏洩しています：</p>
+            <ul id="infoList"></ul>
+                <li>メールアドレス: user@example.com</li>
+                <li>パスワード: password123</li>
+                <li>クレジットカード番号: 1234-5678-9012-3456</li>
+            </ul>
+        </div>
+        
+        <script>
+            const infoList = document.getElementById('infoList');
+            const info = {
+            'ユーザーエージェント': navigator.userAgent,
+            'プラットフォーム': navigator.platform,
+            '言語': navigator.language,
+            'オンライン状態': navigator.onLine ? "オンライン" : "オフライン",
+            'Cookie有効': navigator.cookieEnabled ? "はい" : "いいえ"
+            };
+
+            for (const [key, value] of Object.entries(info)) {
+            const li = document.createElement('li');
+            li.textContent = `${key}: ${value}`;
+            infoList.appendChild(li);
+            }
+        </script>
+    </body>
+</html>
