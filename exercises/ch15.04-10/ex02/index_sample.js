@@ -5,8 +5,9 @@ const template = document.querySelector("#todo-template");
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (input.value.trim() === "") return;
-
+  if (input.value.trim() === "") {
+    return;
+  }
   const todo = input.value.trim();
   input.value = "";
 
@@ -17,17 +18,13 @@ form.addEventListener("submit", (e) => {
   const destroy = clone.querySelector("button");
 
   toggle.addEventListener("change", () => {
-    // Tailwind CSS 用にチェック済みスタイルを切り替え
-    if (toggle.checked) {
-      label.classList.add("line-through", "text-gray-400");
-    } else {
-      label.classList.remove("line-through", "text-gray-400");
-    }
+    // IMPORTANT: ChatGPT にはこの関数内のコードのみ変更してもらうこと
+    li.classList.toggle("completed", toggle.checked);
   });
-
   label.textContent = todo;
-
-  destroy.addEventListener("click", () => li.remove());
+  destroy.addEventListener("click", () => {
+    li.remove();
+  });
 
   list.prepend(li);
 });

@@ -1,3 +1,91 @@
-.completed {
-  text-decoration: line-through;
+/* ページ全体の背景とフォントの基本設定 */
+body {
+  font-family: sans-serif;
+  background-color: #fff8dc; /* 薄いクリーム色で優しい雰囲気 */
+  margin: 0;
+  padding: 30px;
+}
+
+/* 中央にボックスを作って ToDo 本体を収める */
+main,
+form,
+ul {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 入力フォームをカード風に強調 */
+form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.1); /* 軽い浮き感 */
+}
+
+/* 入力ボックスを大きめにして使いやすく */
+#new-todo {
+  flex: 1;
+  padding: 10px;
+  font-size: 1rem;
+  border: 2px solid #f5d76e; /* ピカチュウ感の黄色系 */
+  border-radius: 8px;
+}
+
+/* 追加ボタンを丸みのあるポケモン風に */
+form button {
+  padding: 10px 18px;
+  font-size: 1rem;
+  border: none;
+  background: #ffcb05; /* ピカチュウの体色イメージ */
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* ボタン hover で少し濃くしてアニメぽさ */
+form button:hover {
+  background: #f0b90a;
+}
+
+/* ToDo リストの余白リセット */
+#todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 各 ToDo のカード */
+#todo-list li {
+  background: #ffffff;
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* checked 済みならグレー + α */
+.completed .content {
+  text-decoration: line-through; /* 元のロジックを活かす */
+  color: #999999; /* 視覚的にも完了感 */
+}
+
+/* 削除ボタンのスタイル。❌ を若干ボタンっぽく */
+.destroy {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  padding: 6px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+/* 削除ボタン hover で明確に */
+.destroy:hover {
+  opacity: 1;
 }

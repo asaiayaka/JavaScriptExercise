@@ -1,0 +1,17 @@
+{
+  "name": "ex02",
+  "version": "1.0.0",
+  "description": "以下のコマンドを実行すると index.html および index.js の内容を元に style.css ファイルが作成される。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.14"
+  }
+}
