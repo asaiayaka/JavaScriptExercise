@@ -1,14 +1,39 @@
-const form = document.querySelector("#new-todo-form");
-const list = document.querySelector("#todo-list");
-const input = document.querySelector("#new-todo");
-const template = document.querySelector("#todo-template");
+export const todos = [];
 
-// { content: "...", completed: true or false } の配列
-const todos = [];
+let form, list, input, template;
 
-function renderTodos(todos) {
+export function initApp() {
+  form = document.querySelector("#new-todo-form");
+  list = document.querySelector("#todo-list");
+  input = document.querySelector("#new-todo");
+  template = document.querySelector("#todo-template");
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const content = input.value.trim();
+    if (!content) return;
+    todos.push({ content, completed: false });
+    input.value = "";
+    renderTodos();
+  });
+
+  window.addEventListener("hashchange", renderTodos);
+
+  renderTodos();
+}
+
+export function renderTodos() {
+  const filter = getCurrentFilter();
   list.innerHTML = "";
+
   todos.forEach((todo, index) => {
+    if (
+      (filter === "active" && todo.completed) ||
+      (filter === "completed" && !todo.completed)
+    ) {
+      return;
+    }
+
     const clone = template.content.cloneNode(true);
     const li = clone.querySelector("li");
     const toggle = clone.querySelector("input");
@@ -16,38 +41,26 @@ function renderTodos(todos) {
     const destroy = clone.querySelector("button");
 
     li.classList.toggle("completed", todo.completed);
+    toggle.checked = todo.completed;
+    label.textContent = todo.content;
+
     toggle.addEventListener("change", () => {
       todo.completed = toggle.checked;
-      renderTodos(todos);
+      renderTodos();
     });
-    label.textContent = todo.content;
-    toggle.checked = todo.completed;
+
     destroy.addEventListener("click", () => {
       todos.splice(index, 1);
-      deleteTodo(todo.content);
-      renderTodos(todos);
+      renderTodos();
     });
 
     list.appendChild(li);
   });
 }
 
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  if (input.value.trim() === "") {
-    return;
-  }
-  const todo = input.value.trim();
-  input.value = "";
-
-  todos.push({ content: todo, completed: false });
-  renderTodos(todos);
-});
-
-window.addEventListener("hashchange", () => {
-  // ここを実装してね
-});
-
-function deleteTodo(content) {
-  todos = todos.filter((t) => t.content !== content);
+function getCurrentFilter() {
+  const hash = window.location.hash;
+  if (hash === "#/active") return "active";
+  if (hash === "#/completed") return "completed";
+  return "all";
 }

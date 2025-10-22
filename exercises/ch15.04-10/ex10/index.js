@@ -1,7 +1,5 @@
-// 50 x 50 の盤面とする
 const ROWS = 50;
 const COLS = 50;
-// 1セルのサイズ
 const RESOLUTION = 10;
 
 const canvas = document.querySelector("#screen");
@@ -12,51 +10,65 @@ const pauseButton = document.querySelector("#pause");
 canvas.width = ROWS * RESOLUTION;
 canvas.height = COLS * RESOLUTION;
 
-// https://developer.mozilla.org/ja/docs/Web/API/Window/requestAnimationFrame が返す ID
 let animationId = null;
-
-// NOTE: download from https://soundeffect-lab.info/sound/button/mp3/decision1.mp3
 const sound = new Audio("/ch15.04-10/ex10/decision1.mp3");
 
-// ライフゲームのセル (true or false) をランダムに初期化する
+// セルをランダム初期化
 let grid = new Array(ROWS)
   .fill(null)
-  .map(() =>
-    new Array(COLS).fill(null).map(() => !!Math.floor(Math.random() * 2))
-  );
+  .map(() => new Array(COLS).fill(null).map(() => !!Math.floor(Math.random() * 2)));
 
-// grid を canvas に描画する
 function renderGrid(grid) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
-      const cell = grid[row][col];
       ctx.beginPath();
       ctx.rect(col * RESOLUTION, row * RESOLUTION, RESOLUTION, RESOLUTION);
-      ctx.fillStyle = cell ? "black" : "white";
+      ctx.fillStyle = grid[row][col] ? "black" : "white";
       ctx.fill();
+      ctx.strokeStyle = "#ccc";
       ctx.stroke();
     }
   }
 }
 
-// Life Game のルールに従ってセルを更新する
 function updateGrid(grid) {
-  // 新しいグリッドを作成
-  const nextGrid = grid.map((arr) => [...arr]);
+  const nextGrid = grid.map(arr => [...arr]);
 
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
-      // 周囲のセルの生存数を数えて nextGrid[row][col] に true or false を設定する (実装してね)
+      let liveNeighbors = 0;
+
+      // 8近傍の生きているセルを数える
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue; // 自分自身は無視
+          const r = row + dr;
+          const c = col + dc;
+          if (r >= 0 && r < ROWS && c >= 0 && c < COLS && grid[r][c]) {
+            liveNeighbors++;
+          }
+        }
+      }
+
+      // ライフゲームのルール
+      if (grid[row][col]) {
+        // 生きているセル
+        nextGrid[row][col] = liveNeighbors === 2 || liveNeighbors === 3;
+      } else {
+        // 死んでいるセル
+        nextGrid[row][col] = liveNeighbors === 3;
+      }
     }
   }
+
   return nextGrid;
 }
 
-// canvas がクリックされたときの処理 (セルの値を反転する)
-canvas.addEventListener("click", function (evt) {
+// クリックでセルの状態を反転
+canvas.addEventListener("click", function(evt) {
   const rect = canvas.getBoundingClientRect();
   const pos = { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-
   const row = Math.floor(pos.y / RESOLUTION);
   const col = Math.floor(pos.x / RESOLUTION);
   grid[row][col] = !grid[row][col];
@@ -64,30 +76,34 @@ canvas.addEventListener("click", function (evt) {
   renderGrid(grid);
 });
 
-// requestAnimationFrame によって一定間隔で更新・描画を行う
-// TODO: リフレッシュレートの高い画面では速く実行されてしまうため、以下を参考に更新頻度が常に一定となるようにしなさい
-// https://developer.mozilla.org/ja/docs/Web/API/Window/requestAnimationFrame
-function update() {
-  grid = updateGrid(grid);
-  renderGrid(grid);
+// 一定間隔で更新するための制御
+let lastTime = 0;
+const FPS = 10; // 1秒間に10回更新
+const interval = 1000 / FPS;
+
+function update(time = 0) {
   animationId = requestAnimationFrame(update);
+
+  const delta = time - lastTime;
+  if (delta > interval) {
+    lastTime = time - (delta % interval);
+    grid = updateGrid(grid);
+    renderGrid(grid);
+  }
 }
 
+// Start ボタン
 startButton.addEventListener("click", () => {
-  // 既にアニメーションが動いている場合は何もしない
-  if (animationId) {
-    return;
-  }
-  update();
+  if (!animationId) update();
 });
 
+// Pause ボタン
 pauseButton.addEventListener("click", () => {
-  // アニメーションが停止している場合は何もしない
-  if (!animationId) {
-    return;
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
   }
-  cancelAnimationFrame(animationId);
-  animationId = null;
 });
 
+// 初期描画
 renderGrid(grid);
