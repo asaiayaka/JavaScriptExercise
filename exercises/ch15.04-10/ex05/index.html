@@ -1,27 +1,50 @@
 <!doctype html>
 <html lang="ja">
-<meta charset="utf-8" />
-<title>test inline-circle</title>
+<head>
+  <meta charset="utf-8" />
+  <title>test inline-circle</title>
+</head>
+<body>
+  <!-- ここでカスタム属性を追加 -->
+  <inline-circle size="80" border-color="blue"></inline-circle>
+  <inline-circle size="48" border-color="green"></inline-circle>
+  <inline-circle size="32" border-color="red"></inline-circle>
 
-<inline-circle size="48" border-color="red"></inline-circle>
+  <script type="module">
+    class InlineCircle extends HTMLElement {
+      static get observedAttributes() { return ['size', 'border-color']; }
 
-<script type="module">
-  class InlineCircle extends HTMLElement {
-    static get observedAttributes() { return ['size', 'border-color']; }
-    constructor() {
-      super(); this.attachShadow({mode:'open'}); this._render();
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this._render();
+      }
+
+      attributeChangedCallback() {
+        this._render();
+      }
+
+      _render() {
+        const size = Number(this.getAttribute('size')) || 32;
+        const color = this.getAttribute('border-color') || '#333';
+        const r = size / 2;
+        this.shadowRoot.innerHTML = `
+          <style>
+            :host {
+              display: inline-block;
+              width: ${size}px;
+              height: ${size}px;
+              vertical-align: middle;
+            }
+          </style>
+          <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+            <circle cx="${r}" cy="${r}" r="${r - 2}" stroke="${color}" stroke-width="2" fill="white" />
+          </svg>
+        `;
+      }
     }
-    attributeChangedCallback() { this._render(); }
-    _render() {
-      const size = Number(this.getAttribute('size')) || 32;
-      const color = this.getAttribute('border-color') || '#333';
-      const r = size / 2;
-      this.shadowRoot.innerHTML = `
-        <style>:host { display:inline-block; width:${size}px; height:${size}px; }</style>
-        <svg viewBox="0 0 ${size} ${size}"><circle cx="${r}" cy="${r}" r="${r-2}" stroke="${color}" fill="white"/></svg>
-      `;
-    }
-  }
-  customElements.define('inline-circle', InlineCircle);
-</script>
+
+    customElements.define('inline-circle', InlineCircle);
+  </script>
+</body>
 </html>
