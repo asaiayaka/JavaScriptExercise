@@ -2,6 +2,7 @@ import WebSocket, { WebSocketServer } from "ws";
 
 const port = 3003;
 const wss = new WebSocketServer({ port });
+console.log(`WebSocket server started on ws://localhost:${port}`);
 
 // 他のクライアントにメッセージを転送する
 wss.on("connection", (ws) => {
