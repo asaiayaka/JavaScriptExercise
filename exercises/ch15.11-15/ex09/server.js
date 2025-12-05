@@ -12,21 +12,24 @@ const wss = new WebSocketServer({ port });
 
 // ライフゲームのセル (true or false) をランダムに初期化する
 let grid = new Array(ROWS)
-.fill(null)
-.map(() =>
-  new Array(COLS).fill(null).map(() => !!Math.floor(Math.random() * 2))
-);
+  .fill(null)
+  .map(() =>
+    new Array(COLS).fill(null).map(() => !!Math.floor(Math.random() * 2))
+  );
 // 停止状態
 let paused = true;
 
 wss.on("connection", (ws) => {
-  // 接続されたクライアントに初期のグリッドを送信
+  // 盤面を送る
   ws.send(JSON.stringify({ type: "update", grid }));
+
+  // 現在の停止状態も送る
+  ws.send(JSON.stringify({ type: paused ? "pause" : "start" }));
 
   ws.on("message", (message) => {
     const data = JSON.parse(message.toString());
     switch (data.type) {
-      case "toggle": // セルの反転
+      case "toggle":
         grid[data.row][data.col] = !grid[data.row][data.col];
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
@@ -34,7 +37,8 @@ wss.on("connection", (ws) => {
           }
         });
         break;
-      case "pause": // 停止
+
+      case "pause":
         paused = true;
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
@@ -42,7 +46,8 @@ wss.on("connection", (ws) => {
           }
         });
         break;
-      case "start": // 開始・再開
+
+      case "start":
         paused = false;
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
@@ -56,12 +61,40 @@ wss.on("connection", (ws) => {
 
 // Life Game のルールに従ってセルを更新する
 function updateGrid(grid) {
-  // 新しいグリッドを作成
   const nextGrid = grid.map((arr) => [...arr]);
+
+  const dirs = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
+
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
-      // 周囲のセルの生存数を数えて nextGrid[row][col] に true or false を設定する
-      //（15.04-10.10の実装を利用）
+      let alive = 0;
+
+      // 周囲8マスの生存数を数える
+      for (const [dx, dy] of dirs) {
+        const nr = row + dx;
+        const nc = col + dy;
+        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+          if (grid[nr][nc]) alive++;
+        }
+      }
+
+      // ライフゲームのルール
+      if (grid[row][col]) {
+        // 生きている
+        nextGrid[row][col] = alive === 2 || alive === 3;
+      } else {
+        // 死んでいる
+        nextGrid[row][col] = alive === 3;
+      }
     }
   }
   return nextGrid;
