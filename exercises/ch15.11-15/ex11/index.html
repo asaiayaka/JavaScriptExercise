@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+  <meta charset="UTF-8" />
+  <body style="margin: 0">
+    <canvas id="c"></canvas>
+    <script>
+      // シェルピンスキーギャスケット描画
+      // canvas と 2D描画コンテキスト
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d");
+
+      // ウィンドウサイズに合わせる
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener("resize", resize);
+
+      // 描画パラメーター
+      // 中心座標(スクリーン座標ではなく数学的座標)
+      let cx = 0;
+      let cy = 0;
+      // 1ピクセルが何単位に相当するか
+      let scale = 0.005; // 値小→ズーム
+
+      // 指定座標(px, py)がSierpinskiの穴か判定する
+      // 典型的なビット演算の方法
+      function isHole(px, py) {
+        let x = Math.abs(px);
+        let y = Math.abs(py);
+
+        for (let i = 0; i < 15; i++) {
+          if (x > 0.5 && y > 0.5) return true;
+          x *= 2;
+          y *= 2;
+        }
+        return false;
+      }
+
+      // 1フレーム描画
+      function draw() {
+        const w = 800;
+        const h = 600;
+        canvas.width = w;
+        canvas.height = h;
+
+        const img = ctx.createImageData(w, h);
+        const data = img.data;
+
+        let p = 0;
+
+        for (let j = 0; j < h; j++) {
+          for (let i = 0; i < w; i++) {
+            const x = cx + (i - w / 2) * scale;
+            const y = cy + (j - h / 2) * scale;
+
+            const hole = isHole(x, y);
+
+            const color = hole ? 255 : 0;
+
+            data[p++] = color;
+            data[p++] = color;
+            data[p++] = color;
+            data[p++] = 255;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+      }
+
+      draw();
+
+      // クリックした場所へズーム
+      canvas.addEventListener("click", (e) => {
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // クリック位置を数学座標へ
+        const px = cx + (e.clientX - w / 2) * scale;
+        const py = cy + (e.clientY - h / 2) * scale;
+
+        // 中心をクリックした座標へ
+        cx = px;
+        cy = py;
+
+        // ズームイン
+        scale /= 2;
+
+        draw();
+      });
+    </script>
+  </body>
+</html>
