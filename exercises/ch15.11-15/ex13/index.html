@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ollama Chat - Gemma 2B</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #fafafa;
+      }
+      #chat {
+        width: 600px;
+        margin: auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        background: black;
+        color: white;
+      }
+      .msg {
+        margin: 4px 0;
+      }
+      .user {
+        color: cyan;
+      }
+      .ai {
+        color: yellow;
+        white-space: pre-wrap;
+      }
+      #controls {
+        text-align: center;
+        margin-top: 10px;
+      }
+      #prompt {
+        width: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2 style="text-align: center">Gemma 2B Chat (via Ollama)</h2>
+
+    <div id="chat"></div>
+
+    <div id="controls">
+      <input id="prompt" placeholder="質問を入力..." />
+      <button id="sendBtn">送信</button>
+    </div>
+
+    <script>
+      // チャット履歴表示用の要素
+      const chatDiv = document.getElementById("chat");
+      const promptInput = document.getElementById("prompt");
+      const sendBtn = document.getElementById("sendBtn");
+
+      // 単純な履歴（Ollamaのmessagesに渡す）
+      const messages = [];
+
+      // 表示用
+      function appendMessage(role, text) {
+        const div = document.createElement("div");
+        div.className = "msg " + role;
+        div.textContent = text;
+        chatDiv.appendChild(div);
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      }
+
+      //   Enterで送信
+      promptInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          sendMessage();
+        }
+      });
+      sendBtn.onclick = sendMessage;
+
+      async function sendMessage() {
+        const text = promptInput.value.trim();
+        if (!text) {
+          return;
+        }
+
+        // UI
+        appendMessage("user", text);
+        promptInput.value = "";
+        sendBtn.disabled = true;
+
+        // 履歴に追加
+        messages.push({ role: "user", content: text });
+
+        // ストリーム表示用のAIメッセージ要素
+        const aiMsg = document.createElement("div");
+        aiMsg.className = "msg ai";
+        chatDiv.appendChild(aiMsg);
+
+        const url = "http://localhost:11434/api/chat";
+
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "gemma:2b",
+              messages,
+              stream: true, // ストリーミング
+            }),
+          });
+
+          if (!response.ok || !response.body) {
+            appendMessage(
+              "sys",
+              `接続に失敗しました（${response.status}）。Ollamaが起動しているか、モデルが存在するか、ポートが正しいか確認してください。`
+            );
+            sendBtn.disabled = false;
+            return;
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+
+          let assistantText = "";
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+              break;
+            }
+
+            const chunkText = decoder.decode(value, { stream: true });
+            const lines = chunkText.split("\n");
+
+            for (const line of lines) {
+              if (!line.trim()) {
+                continue;
+              }
+              try {
+                const json = JSON.parse(line);
+
+                // Ollama chatのストリームは{message: {role, content}, done: boolean} が逐次来る
+                if (json.message && json.message.content) {
+                  assistantText += json.message.content;
+                  aiMsg.textContent = assistantText;
+                }
+                if (json.done) {
+                  // 完了時に履歴へ保存(assistant発話)
+                  messages.push({ role: "assistant", content: assistantText });
+                }
+              } catch (e) {
+                // JSON以外の行は無視
+              }
+            }
+          }
+        } catch (err) {
+          // ネットワーク例外
+          appendMessage(
+            "sys",
+            `通信エラー： ${err?.message ?? err}.
+      - Ollamaサーバが起動中か（例: \`ollama serve\`）
+      - ポート 11434 にアクセスできるか
+      - ファイアウォール／プロキシ設定
+      - モデル \`gemma:2b\` が存在するか（\`ollama pull gemma:2b\`）
+      を確認してください。`
+          );
+        } finally {
+          sendBtn.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>
