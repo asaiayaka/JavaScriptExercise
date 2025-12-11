@@ -9,3 +9,4 @@
 3. API疎通
     - curl http://localhost:11434/api/tags
 4. URLを開く
+![alt text]({3F4539DF-3282-4C4C-B4CD-B522BE6E83CF}.png)
