@@ -30,6 +30,7 @@
   "dependencies": {
     "acorn": "^8.14.1",
     "grapheme-splitter": "^1.0.4",
+    "iconv-lite": "^0.7.1",
     "ws": "^8.18.3"
   }
 }
