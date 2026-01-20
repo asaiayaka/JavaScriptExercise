@@ -4,7 +4,14 @@
   "description": "今までの章では presets に用意された package.json や設定ファイルを利用して解答を作成してきたが、この章では ch17 ディレクトリの下に npm プロジェクトを作成して、自分で package.json やその他の設定ファイルを整備しなさい。",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "eslint": "...",
+    "eslint-config-google": "file:...",
+    "eslint-config-prettier": "file:...",
+    "prettier": "..."
   },
   "keywords": [],
   "author": "",
