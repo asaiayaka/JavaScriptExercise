@@ -10,11 +10,13 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
-    "jest": "^29.7.0",
     "eslint": "...",
     "eslint-config-google": "file:...",
     "eslint-config-prettier": "file:...",
-    "prettier": "..."
+    "flow-bin": "^0.298.0",
+    "jest": "^29.7.0",
+    "prettier": "...",
+    "typescript": "^5.9.3"
   },
   "keywords": [],
   "author": "",

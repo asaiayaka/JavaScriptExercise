@@ -32,7 +32,7 @@ function isUserObject(obj: unknown): obj is User {
 }
 
 // TaskManager
-export class TasManager<T extends Task> {
+export class TaskManager<T extends Task> {
     private _tasks: T[] = [];
 
     // タスクを追加する

@@ -3,7 +3,7 @@ import {
   TaskManager,
   isLowOrCompletedTask,
   not,
-} from "./task.ts";
+} from "./task";
 
 const user1 = { id: 1, name: "Alice" };
 const user2 = { id: 2, name: "Bob" };
