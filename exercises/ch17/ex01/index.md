@@ -1,5 +1,13 @@
 # 解答
 
+## package.jsonに追記した箇所
+
+"lint": "eslint ."
+→ プロジェクト全体を ESLint で lint するコマンド。Google JavaScript Style Guide に従った設定でバグ検知や構文チェックを行うためのもの。
+
+"format": "prettier --write ."
+→ プロジェクト全体を Prettier でフォーマットし、コードを自動修正するコマンド。Googleスタイルに近いフォーマット設定で整形される。
+
 実行コマンド：
 
 ```bash
