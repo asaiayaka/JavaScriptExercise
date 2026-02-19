@@ -1,0 +1,74 @@
+[
+  {
+    "id": "mercury",
+    "name": "Mercury",
+    "rotationHours": 1407.6,
+    "orbitalDays": 87.97,
+    "orbitRadius": 110,
+    "size": 8,
+    "color": "#c9b7a3"
+  },
+  {
+    "id": "venus",
+    "name": "Venus",
+    "rotationHours": 5832.5,
+    "orbitalDays": 224.7,
+    "orbitRadius": 150,
+    "size": 10,
+    "color": "#d7b27a"
+  },
+  {
+    "id": "earth",
+    "name": "Earth",
+    "rotationHours": 24.0,
+    "orbitalDays": 365.25,
+    "orbitRadius": 190,
+    "size": 11,
+    "color": "#4f8bd7"
+  },
+  {
+    "id": "mars",
+    "name": "Mars",
+    "rotationHours": 24.62,
+    "orbitalDays": 687.0,
+    "orbitRadius": 230,
+    "size": 9,
+    "color": "#c46c4b"
+  },
+  {
+    "id": "jupiter",
+    "name": "Jupiter",
+    "rotationHours": 9.93,
+    "orbitalDays": 4332.6,
+    "orbitRadius": 300,
+    "size": 18,
+    "color": "#d6b08c"
+  },
+  {
+    "id": "saturn",
+    "name": "Saturn",
+    "rotationHours": 10.66,
+    "orbitalDays": 10759.2,
+    "orbitRadius": 360,
+    "size": 16,
+    "color": "#d8c18f"
+  },
+  {
+    "id": "uranus",
+    "name": "Uranus",
+    "rotationHours": 17.24,
+    "orbitalDays": 30688.5,
+    "orbitRadius": 420,
+    "size": 14,
+    "color": "#9cd6e5"
+  },
+  {
+    "id": "neptune",
+    "name": "Neptune",
+    "rotationHours": 16.11,
+    "orbitalDays": 60182.0,
+    "orbitRadius": 480,
+    "size": 14,
+    "color": "#6f8fdc"
+  }
+]
