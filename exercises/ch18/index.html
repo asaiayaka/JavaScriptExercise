@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>惑星時計 — Planetary Clock</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header><h1>PLANETARY CLOCK &mdash; 惑星時計</h1></header>
+
+    <div id="solar-wrap">
+      <svg
+        id="solar-svg"
+        viewBox="-550 -550 1100 1100"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fffbe6" />
+            <stop offset="40%" stop-color="#ffe040" />
+            <stop offset="100%" stop-color="#ff5f00" stop-opacity="0.75" />
+          </radialGradient>
+          <filter id="sunGlow" x="-150%" y="-150%" width="400%" height="400%">
+            <feGaussianBlur
+              in="SourceGraphic"
+              stdDeviation="13"
+              result="blur"
+            />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="pGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur
+              in="SourceGraphic"
+              stdDeviation="2.5"
+              result="blur"
+            />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <!-- 星空 -->
+        <g id="starfield"></g>
+
+        <!-- 軌道 -->
+        <g id="orbits"></g>
+
+        <!-- 太陽 -->
+        <circle
+          cx="0"
+          cy="0"
+          r="30"
+          fill="url(#sunGrad)"
+          filter="url(#sunGlow)"
+        />
+        <text
+          x="0"
+          y="46"
+          text-anchor="middle"
+          font-size="8"
+          fill="rgba(255,210,60,0.65)"
+          letter-spacing="1.5"
+        >
+          SUN
+        </text>
+
+        <!-- 惑星グループ（JS で移動） -->
+        <g id="planet-groups"></g>
+      </svg>
+
+      <!-- 時刻バッジコンテナ -->
+      <div id="badges-container" style="position: absolute; inset: 0"></div>
+
+      <!-- 入力オーバーレイ -->
+      <div id="overlay-input">
+        <input id="time-input" type="text" maxlength="5" placeholder="HH:MM" />
+        <small>Enter で確定 &nbsp;/&nbsp; Esc でキャンセル</small>
+      </div>
+    </div>
+
+    <footer>
+      <span id="status">● LIVE</span>
+      <button id="reset-btn">現在時刻に戻す</button>
+      <span style="opacity: 0.4">バッジをクリックして時刻を入力</span>
+    </footer>
+
+    <script>
+      "use strict";
+
+      // ══════════════════════════════════════════════
+      //  惑星データ
+      // ══════════════════════════════════════════════
+      const PLANETS = [
+        {
+          id: "mercury",
+          nameJa: "水星",
+          rotH: 1407.6,
+          orbDays: 87.97,
+          r: 110,
+          sz: 8,
+          col: "#c9b7a3",
+        },
+        {
+          id: "venus",
+          nameJa: "金星",
+          rotH: 5832.5,
+          orbDays: 224.7,
+          r: 150,
+          sz: 10,
+          col: "#d7b27a",
+        },
+        {
+          id: "earth",
+          nameJa: "地球",
+          rotH: 24.0,
+          orbDays: 365.25,
+          r: 190,
+          sz: 11,
+          col: "#4f8bd7",
+        },
+        {
+          id: "mars",
+          nameJa: "火星",
+          rotH: 24.62,
+          orbDays: 687.0,
+          r: 230,
+          sz: 9,
+          col: "#c46c4b",
+        },
+        {
+          id: "jupiter",
+          nameJa: "木星",
+          rotH: 9.93,
+          orbDays: 4332.6,
+          r: 300,
+          sz: 18,
+          col: "#d6b08c",
+        },
+        {
+          id: "saturn",
+          nameJa: "土星",
+          rotH: 10.66,
+          orbDays: 10759.2,
+          r: 360,
+          sz: 16,
+          col: "#d8c18f",
+        },
+        {
+          id: "uranus",
+          nameJa: "天王星",
+          rotH: 17.24,
+          orbDays: 30688.5,
+          r: 420,
+          sz: 14,
+          col: "#9cd6e5",
+        },
+        {
+          id: "neptune",
+          nameJa: "海王星",
+          rotH: 16.11,
+          orbDays: 60182.0,
+          r: 480,
+          sz: 14,
+          col: "#6f8fdc",
+        },
+      ];
+
+      // ══════════════════════════════════════════════
+      //  時刻変換ロジック（time-utils.js と同等）
+      // ══════════════════════════════════════════════
+      const SECS_PER_HOUR = 3600;
+      const toEpochSec = (d) => Math.floor(d.getTime() / 1000);
+      const planetDaySec = (h) => h * SECS_PER_HOUR;
+
+      function earthDateToPlanetDaySec(date, rotH) {
+        // getTimezoneOffset() は UTC との差を分で返す（JST は -540）
+        const tzOffsetSec = -date.getTimezoneOffset() * 60;
+        const es = toEpochSec(date) + tzOffsetSec;
+        const ds = planetDaySec(rotH);
+        return ((es % ds) + ds) % ds;
+      }
+
+      function planetTimeToEarthSec(refDate, rotH, hh, mm) {
+        const ds = planetDaySec(rotH);
+        const target = (hh * 60 + mm) * 60;
+        const refSec = toEpochSec(refDate);
+        const refWithin = ((refSec % ds) + ds) % ds;
+        const delta =
+          target >= refWithin ? target - refWithin : ds - (refWithin - target);
+        return refSec + delta;
+      }
+
+      function formatTime(daySec) {
+        const m = Math.floor(daySec / 60);
+        const hh = String(Math.floor(m / 60) % 24).padStart(2, "0");
+        const mm = String(m % 60).padStart(2, "0");
+        return `${hh}:${mm}`;
+      }
+
+      // 惑星の年月日を計算（Unix エポック起算）
+      function formatPlanetDate(epochSec, rotH, orbDays) {
+        const dayLen  = rotH * 3600;          // 1惑星日 = 何秒
+        const yearLen = orbDays * 86400;      // 1惑星年 = 何秒
+        const daysPerYear  = yearLen / dayLen;
+        const daysPerMonth = daysPerYear / 12;
+        const totalDays    = epochSec / dayLen;
+        const year  = Math.floor(totalDays / daysPerYear) + 1;
+        const doy   = totalDays % daysPerYear;
+        const month = Math.floor(doy / daysPerMonth) + 1;
+        const day   = Math.floor(doy % daysPerMonth) + 1;
+        return `Y${year} ${String(month).padStart(2,"0")}/${String(day).padStart(2,"0")}`;
+      }
+
+      // ══════════════════════════════════════════════
+      //  基準時刻の状態管理
+      // ══════════════════════════════════════════════
+      let refEpochMs = Date.now();
+      let refStartPerf = performance.now();
+      const statusEl = document.getElementById("status");
+
+      function currentDate() {
+        return new Date(refEpochMs + (performance.now() - refStartPerf));
+      }
+      function flashAllBadges() {
+        badges.forEach((b) => {
+          b.classList.remove("flash");
+          // reflow を挟んでアニメーションをリセット
+          void b.offsetWidth;
+          b.classList.add("flash");
+          b.addEventListener(
+            "animationend",
+            () => b.classList.remove("flash"),
+            { once: true },
+          );
+        });
+      }
+      function setReference(earthSec) {
+        refEpochMs = earthSec * 1000;
+        refStartPerf = performance.now();
+        statusEl.textContent = "◎ FIXED";
+        statusEl.style.color = "#ff9944";
+        flashAllBadges();
+      }
+      function resetLive() {
+        refEpochMs = Date.now();
+        refStartPerf = performance.now();
+        statusEl.textContent = "● LIVE";
+        statusEl.style.color = "#44ff99";
+      }
+      document.getElementById("reset-btn").addEventListener("click", resetLive);
+
+      // ══════════════════════════════════════════════
+      //  SVG 構築
+      // ══════════════════════════════════════════════
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.getElementById("solar-svg");
+      const mk = (tag) => document.createElementNS(NS, tag);
+
+      // 星空
+      const sfGroup = document.getElementById("starfield");
+      for (let i = 0; i < 320; i++) {
+        const s = mk("circle");
+        const a = Math.random() * Math.PI * 2;
+        const dist = 340 + Math.random() * 195;
+        s.setAttribute("cx", (dist * Math.cos(a)).toFixed(1));
+        s.setAttribute("cy", (dist * Math.sin(a)).toFixed(1));
+        s.setAttribute("r", (Math.random() * 1.5).toFixed(2));
+        s.setAttribute(
+          "fill",
+          `rgba(255,255,255,${(0.25 + Math.random() * 0.75).toFixed(2)})`,
+        );
+        sfGroup.appendChild(s);
+      }
+      // 内側にも少し
+      for (let i = 0; i < 40; i++) {
+        const s = mk("circle");
+        s.setAttribute("cx", ((Math.random() - 0.5) * 900).toFixed(1));
+        s.setAttribute("cy", ((Math.random() - 0.5) * 900).toFixed(1));
+        s.setAttribute("r", (Math.random() * 0.9).toFixed(2));
+        s.setAttribute(
+          "fill",
+          `rgba(255,255,255,${(0.2 + Math.random() * 0.4).toFixed(2)})`,
+        );
+        sfGroup.appendChild(s);
+      }
+
+      // 軌道リング
+      const orbitGroup = document.getElementById("orbits");
+      PLANETS.forEach((p) => {
+        const c = mk("circle");
+        c.setAttribute("cx", 0);
+        c.setAttribute("cy", 0);
+        c.setAttribute("r", p.r);
+        c.setAttribute("fill", "none");
+        c.setAttribute("stroke", "rgba(80,120,210,0.18)");
+        c.setAttribute("stroke-width", "1");
+        orbitGroup.appendChild(c);
+      });
+
+      // 惑星グループ
+      const pgGroup = document.getElementById("planet-groups");
+      const planetEls = PLANETS.map((p) => {
+        const g = mk("g");
+
+        // 土星のリング（惑星の後ろ側に見えるように先に追加）
+        if (p.id === "saturn") {
+          const ring = mk("ellipse");
+          ring.setAttribute("rx", (p.sz * 2.4).toFixed(1));
+          ring.setAttribute("ry", (p.sz * 0.5).toFixed(1));
+          ring.setAttribute("fill", "none");
+          ring.setAttribute("stroke", "#c8a030");
+          ring.setAttribute("stroke-width", "3.5");
+          ring.setAttribute("opacity", "0.65");
+          g.appendChild(ring);
+        }
+
+        const circle = mk("circle");
+        circle.setAttribute("r", p.sz);
+        circle.setAttribute("fill", p.col);
+        circle.setAttribute("filter", "url(#pGlow)");
+        g.appendChild(circle);
+
+        // 惑星名（SVG 内ラベル、惑星の少し上）
+        const nameT = mk("text");
+        nameT.setAttribute("y", -(p.sz + 7));
+        nameT.setAttribute("text-anchor", "middle");
+        nameT.setAttribute("font-size", "14");
+        nameT.setAttribute("font-weight", "600");
+        nameT.setAttribute("fill", p.col);
+        nameT.setAttribute("opacity", "0.92");
+        nameT.textContent = p.nameJa;
+        g.appendChild(nameT);
+
+        pgGroup.appendChild(g);
+        return g;
+      });
+
+      // ══════════════════════════════════════════════
+      //  時刻バッジ（HTML overlays）
+      // ══════════════════════════════════════════════
+      const badgesContainer = document.getElementById("badges-container");
+      const badges = PLANETS.map((p, i) => {
+        const div = document.createElement("div");
+        div.className = "time-badge";
+        div.style.color = p.col;
+        div.style.borderColor = p.col + "55";
+        div.textContent = "00:00";
+        div.addEventListener("click", () => openInput(i, div));
+        badgesContainer.appendChild(div);
+        return div;
+      });
+
+      // ══════════════════════════════════════════════
+      //  入力オーバーレイ
+      // ══════════════════════════════════════════════
+      const overlayDiv = document.getElementById("overlay-input");
+      const timeInput = document.getElementById("time-input");
+      let activeIdx = -1;
+      let justOpened = false;
+
+      function openInput(idx, badgeEl) {
+        activeIdx = idx;
+        justOpened = true;
+        setTimeout(() => {
+          justOpened = false;
+        }, 200);
+
+        const p = PLANETS[idx];
+        timeInput.value = formatTime(
+          earthDateToPlanetDaySec(currentDate(), p.rotH),
+        );
+        timeInput.style.color = p.col;
+
+        const bRect = badgeEl.getBoundingClientRect();
+        const wRect = document
+          .getElementById("solar-wrap")
+          .getBoundingClientRect();
+        overlayDiv.style.left =
+          bRect.left + bRect.width / 2 - wRect.left + "px";
+        overlayDiv.style.top = bRect.top - wRect.top + "px";
+        overlayDiv.style.display = "block";
+        timeInput.select();
+        timeInput.focus();
+      }
+
+      function closeInput() {
+        overlayDiv.style.display = "none";
+        activeIdx = -1;
+      }
+
+      function confirmInput() {
+        if (activeIdx < 0) return;
+        const m = timeInput.value.trim().match(/^(\d{1,2}):(\d{2})$/);
+        if (m) {
+          const hh = +m[1],
+            mm = +m[2];
+          if (hh <= 23 && mm <= 59) {
+            const earthSec = planetTimeToEarthSec(
+              currentDate(),
+              PLANETS[activeIdx].rotH,
+              hh,
+              mm,
+            );
+            setReference(earthSec);
+          }
+        }
+        closeInput();
+      }
+
+      timeInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          confirmInput();
+          e.preventDefault();
+        } else if (e.key === "Escape") closeInput();
+      });
+      timeInput.addEventListener("blur", () => {
+        setTimeout(() => {
+          if (!justOpened) closeInput();
+        }, 160);
+      });
+
+      // ══════════════════════════════════════════════
+      //  アニメーションループ
+      // ══════════════════════════════════════════════
+      // 地球が 30 秒で 1 周するよう速度を設定（視覚的スケール）
+      const EARTH_VIS_MS = 30_000;
+      const angularSpeed = PLANETS.map(
+        (p) => (2 * Math.PI) / ((p.orbDays / 365.25) * EARTH_VIS_MS),
+      );
+      // 初期角度を均等に分散（12 時方向から開始）
+      const initAngle = PLANETS.map(
+        (_, i) => (i / PLANETS.length) * 2 * Math.PI - Math.PI / 2,
+      );
+
+      // SVG 座標 → ラッパー div 内ピクセル座標
+      function svgToWrap(sx, sy) {
+        const pt = svg.createSVGPoint();
+        pt.x = sx;
+        pt.y = sy;
+        const ctm = svg.getScreenCTM();
+        if (!ctm) return { x: 0, y: 0 };
+        const sp = pt.matrixTransform(ctm);
+        const wr = document
+          .getElementById("solar-wrap")
+          .getBoundingClientRect();
+        return { x: sp.x - wr.left, y: sp.y - wr.top };
+      }
+
+      function frame(ts) {
+        const now = currentDate();
+
+        PLANETS.forEach((p, i) => {
+          // 惑星の位置（軌道上の角度）
+          const angle = initAngle[i] + angularSpeed[i] * ts;
+          const px = p.r * Math.cos(angle);
+          const py = p.r * Math.sin(angle);
+
+          // SVG グループを移動
+          planetEls[i].setAttribute(
+            "transform",
+            `translate(${px.toFixed(2)},${py.toFixed(2)})`,
+          );
+
+          // バッジを惑星から放射方向へオフセット
+          const nx = Math.cos(angle);
+          const ny = Math.sin(angle);
+          const offset = p.sz + 24; // SVG ユニット
+          const sp = svgToWrap(px + nx * offset, py + ny * offset);
+          badges[i].style.left = sp.x + "px";
+          badges[i].style.top = sp.y + "px";
+
+          // 日付・時刻を更新
+          const epochSec = toEpochSec(now);
+          const dateStr  = formatPlanetDate(epochSec, p.rotH, p.orbDays);
+          const timeStr  = formatTime(earthDateToPlanetDaySec(now, p.rotH));
+          badges[i].innerHTML =
+            `<span style="font-size:9px;opacity:0.7;display:block;text-align:center">${dateStr}</span>${timeStr}`;
+        });
+
+        requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

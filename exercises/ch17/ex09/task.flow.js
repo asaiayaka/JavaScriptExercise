@@ -1,3 +1,4 @@
+// @flow
 // 型定義
 export type User = {
     id: number,
@@ -6,7 +7,7 @@ export type User = {
 
 export type Task = {
     title: string,
-    completed: Boolean,
+    completed: boolean,
     user: User,
 };
 
