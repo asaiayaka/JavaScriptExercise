@@ -179,9 +179,7 @@
       const planetDaySec = (h) => h * SECS_PER_HOUR;
 
       function earthDateToPlanetDaySec(date, rotH) {
-        // getTimezoneOffset() は UTC との差を分で返す（JST は -540）
-        const tzOffsetSec = -date.getTimezoneOffset() * 60;
-        const es = toEpochSec(date) + tzOffsetSec;
+        const es = toEpochSec(date);
         const ds = planetDaySec(rotH);
         return ((es % ds) + ds) % ds;
       }
@@ -205,16 +203,18 @@
 
       // 惑星の年月日を計算（Unix エポック起算）
       function formatPlanetDate(epochSec, rotH, orbDays) {
-        const dayLen  = rotH * 3600;          // 1惑星日 = 何秒
-        const yearLen = orbDays * 86400;      // 1惑星年 = 何秒
-        const daysPerYear  = yearLen / dayLen;
+        const dayLen = rotH * 3600; // 1惑星日 = 何秒
+        const yearLen = orbDays * 86400; // 1惑星年 = 何秒
+        const daysPerYear = yearLen / dayLen;
         const daysPerMonth = daysPerYear / 12;
-        const totalDays    = epochSec / dayLen;
-        const year  = Math.floor(totalDays / daysPerYear) + 1;
-        const doy   = totalDays % daysPerYear;
+        const totalDays = epochSec / dayLen;
+        const year = Math.floor(totalDays / daysPerYear) + 1;
+        const doy = totalDays % daysPerYear;
         const month = Math.floor(doy / daysPerMonth) + 1;
-        const day   = Math.floor(doy % daysPerMonth) + 1;
-        return `Y${year} ${String(month).padStart(2,"0")}/${String(day).padStart(2,"0")}`;
+        const day = Math.floor(doy % daysPerMonth) + 1;
+        return `Y${year} ${String(month).padStart(2, "0")}/${String(
+          day,
+        ).padStart(2, "0")}`;
       }
 
       // ══════════════════════════════════════════════
@@ -477,10 +477,11 @@
 
           // 日付・時刻を更新
           const epochSec = toEpochSec(now);
-          const dateStr  = formatPlanetDate(epochSec, p.rotH, p.orbDays);
-          const timeStr  = formatTime(earthDateToPlanetDaySec(now, p.rotH));
-          badges[i].innerHTML =
-            `<span style="font-size:9px;opacity:0.7;display:block;text-align:center">${dateStr}</span>${timeStr}`;
+          const dateStr = formatPlanetDate(epochSec, p.rotH, p.orbDays);
+          const timeStr = formatTime(earthDateToPlanetDaySec(now, p.rotH));
+          badges[
+            i
+          ].innerHTML = `<span style="font-size:9px;opacity:0.7;display:block;text-align:center">${dateStr}</span>${timeStr}`;
         });
 
         requestAnimationFrame(frame);
