@@ -93,9 +93,7 @@
     <script>
       "use strict";
 
-      // ══════════════════════════════════════════════
       //  惑星データ
-      // ══════════════════════════════════════════════
       const PLANETS = [
         {
           id: "mercury",
@@ -171,93 +169,100 @@
         },
       ];
 
-      // ══════════════════════════════════════════════
-      //  時刻変換ロジック（time-utils.js と同等）
-      // ══════════════════════════════════════════════
+      // 時間計算用定数
       const SECS_PER_HOUR = 3600;
+
+      // Date → UNIX秒（ミリ秒を秒に）
       const toEpochSec = (d) => Math.floor(d.getTime() / 1000);
+      // 惑星1日の秒数
       const planetDaySec = (h) => h * SECS_PER_HOUR;
 
+      // 地球時刻 → 惑星の1日の中の秒
       function earthDateToPlanetDaySec(date, rotH) {
-        const es = toEpochSec(date);
-        const ds = planetDaySec(rotH);
-        return ((es % ds) + ds) % ds;
+        const es = toEpochSec(date); // 地球の時間(秒)
+        const ds = planetDaySec(rotH); // 惑星の1日の長さ（秒）
+        return ((es % ds) + ds) % ds; // 何周したかは無視し、惑星の現在地
       }
 
+      // 惑星時刻 → 対応する地球時刻
       function planetTimeToEarthSec(refDate, rotH, hh, mm) {
-        const ds = planetDaySec(rotH);
-        const target = (hh * 60 + mm) * 60;
-        const refSec = toEpochSec(refDate);
-        const refWithin = ((refSec % ds) + ds) % ds;
+        const ds = planetDaySec(rotH); // 惑星の1日の長さ（秒）
+        const target = (hh * 60 + mm) * 60; // HH:MM → 秒に変換
+        const refSec = toEpochSec(refDate); // 惑星上の時刻
+        const refWithin = ((refSec % ds) + ds) % ds; // 今惑星の1日の中で何時か（秒）refSec % ds：今の1周の位置だけ取り出す
         const delta =
-          target >= refWithin ? target - refWithin : ds - (refWithin - target);
-        return refSec + delta;
+          target >= refWithin ? target - refWithin : ds - (refWithin - target); // 目的地までの距離（秒）
+        return refSec + delta; // 地球時間に戻す
       }
 
+      // 秒 → HH:MM 表示
       function formatTime(daySec) {
         const m = Math.floor(daySec / 60);
-        const hh = String(Math.floor(m / 60) % 24).padStart(2, "0");
+        const hh = String(Math.floor(m / 60) % 24).padStart(2, "0"); // padStart(2, "0"): 文字列を2桁にして、足りなければ左に0を足す
         const mm = String(m % 60).padStart(2, "0");
         return `${hh}:${mm}`;
       }
 
-      // 惑星の年月日を計算（Unix エポック起算）
+      // 惑星の年月日を計算
       function formatPlanetDate(epochSec, rotH, orbDays) {
-        const dayLen = rotH * 3600; // 1惑星日 = 何秒
-        const yearLen = orbDays * 86400; // 1惑星年 = 何秒
-        const daysPerYear = yearLen / dayLen;
-        const daysPerMonth = daysPerYear / 12;
-        const totalDays = epochSec / dayLen;
-        const year = Math.floor(totalDays / daysPerYear) + 1;
-        const doy = totalDays % daysPerYear;
-        const month = Math.floor(doy / daysPerMonth) + 1;
-        const day = Math.floor(doy % daysPerMonth) + 1;
+        const dayLen = rotH * 3600; // 惑星の1日（秒）
+        const yearLen = orbDays * 86400; // 惑星の1年（秒）(地球をもとに)
+        const daysPerYear = yearLen / dayLen; // 惑星の1年 = 何日？
+        const daysPerMonth = daysPerYear / 12; // 12ヶ月で均等割り
+        const totalDays = epochSec / dayLen; // これまでに何日分進んだか
+        const year = Math.floor(totalDays / daysPerYear) + 1; // 何年分進んだか。+1 で1年目スタート
+        const doy = totalDays % daysPerYear; // 今年の何日目か
+        const month = Math.floor(doy / daysPerMonth) + 1; // 今年の何ヶ月目か。+1 で1年目スタート
+        const day = Math.floor(doy % daysPerMonth) + 1; // 月の中の何日目か
         return `Y${year} ${String(month).padStart(2, "0")}/${String(
           day,
         ).padStart(2, "0")}`;
       }
 
-      // ══════════════════════════════════════════════
       //  基準時刻の状態管理
-      // ══════════════════════════════════════════════
-      let refEpochMs = Date.now();
-      let refStartPerf = performance.now();
+      let refEpochMs = Date.now(); // 1970年1月1日から今までのミリ秒、いわゆるリアルな現在時刻
+      let refStartPerf = performance.now(); // ページ開いてから何ミリ秒経ったか
       const statusEl = document.getElementById("status");
 
       function currentDate() {
+        // performance.now() - refStartPerf：スタートしてからの経過時間　refEpochMs + 経過時間：「基準時刻 + 経過」＝今の時刻
         return new Date(refEpochMs + (performance.now() - refStartPerf));
       }
+
       function flashAllBadges() {
+        // 全バッジに対して処理
         badges.forEach((b) => {
+          // 一旦アニメーションを消す(CSSアニメーションは同じクラスを付け直しても再生されない)
           b.classList.remove("flash");
-          // reflow を挟んでアニメーションをリセット
+          // 強制的にブラウザに再計算させてる（reflow）
           void b.offsetWidth;
+          // アニメーション再発火
           b.classList.add("flash");
+          // アニメ終わったら自動でクラス削除
           b.addEventListener(
             "animationend",
             () => b.classList.remove("flash"),
+            // 1回だけ実行(無限にイベント溜まるの防ぐ)
             { once: true },
           );
         });
       }
       function setReference(earthSec) {
         refEpochMs = earthSec * 1000;
-        refStartPerf = performance.now();
+        refStartPerf = performance.now(); // この時間をスタート地点にする
         statusEl.textContent = "◎ FIXED";
         statusEl.style.color = "#ff9944";
         flashAllBadges();
       }
       function resetLive() {
-        refEpochMs = Date.now();
-        refStartPerf = performance.now();
+        refEpochMs = Date.now(); // 今この瞬間のリアル時間
+        refStartPerf = performance.now(); // この時間をスタート地点にする
         statusEl.textContent = "● LIVE";
         statusEl.style.color = "#44ff99";
       }
       document.getElementById("reset-btn").addEventListener("click", resetLive);
 
-      // ══════════════════════════════════════════════
       //  SVG 構築
-      // ══════════════════════════════════════════════
       const NS = "http://www.w3.org/2000/svg";
       const svg = document.getElementById("solar-svg");
       const mk = (tag) => document.createElementNS(NS, tag);
@@ -341,46 +346,53 @@
         return g;
       });
 
-      // ══════════════════════════════════════════════
       //  時刻バッジ（HTML overlays）
-      // ══════════════════════════════════════════════
       const badgesContainer = document.getElementById("badges-container");
+      // 惑星ごとに時刻ラベルを作成
       const badges = PLANETS.map((p, i) => {
+        // HTMLのバッジ
         const div = document.createElement("div");
         div.className = "time-badge";
+        // 惑星カラーを反映
         div.style.color = p.col;
         div.style.borderColor = p.col + "55";
+        // 初期表示
         div.textContent = "00:00";
+        // クリックで入力UIを開く
         div.addEventListener("click", () => openInput(i, div));
+        // 画面に表示
         badgesContainer.appendChild(div);
         return div;
       });
 
-      // ══════════════════════════════════════════════
       //  入力オーバーレイ
-      // ══════════════════════════════════════════════
       const overlayDiv = document.getElementById("overlay-input");
       const timeInput = document.getElementById("time-input");
-      let activeIdx = -1;
-      let justOpened = false;
+      let activeIdx = -1; // どの惑星を操作中か(惑星の番号、未選択の状態)
+      let justOpened = false; // 開いた直後に閉じないように
 
+      // クリックされたとき発火
       function openInput(idx, badgeEl) {
         activeIdx = idx;
         justOpened = true;
+        // 少し待ってから解除
         setTimeout(() => {
           justOpened = false;
         }, 200);
 
         const p = PLANETS[idx];
+        // 今の惑星時間を入力欄に表示
         timeInput.value = formatTime(
           earthDateToPlanetDaySec(currentDate(), p.rotH),
         );
         timeInput.style.color = p.col;
 
+        // 画面の位置とサイズ
         const bRect = badgeEl.getBoundingClientRect();
         const wRect = document
           .getElementById("solar-wrap")
           .getBoundingClientRect();
+        // バッジの位置に入力欄を出す
         overlayDiv.style.left =
           bRect.left + bRect.width / 2 - wRect.left + "px";
         overlayDiv.style.top = bRect.top - wRect.top + "px";
@@ -389,6 +401,7 @@
         timeInput.focus();
       }
 
+      // UI閉じる
       function closeInput() {
         overlayDiv.style.display = "none";
         activeIdx = -1;
@@ -396,11 +409,15 @@
 
       function confirmInput() {
         if (activeIdx < 0) return;
+        // HH:MM形式チェック
         const m = timeInput.value.trim().match(/^(\d{1,2}):(\d{2})$/);
+        // 時刻の表示設定
         if (m) {
           const hh = +m[1],
             mm = +m[2];
+          // 時刻のバリデーション
           if (hh <= 23 && mm <= 59) {
+            // 惑星時間 → 地球時間に変換
             const earthSec = planetTimeToEarthSec(
               currentDate(),
               PLANETS[activeIdx].rotH,
@@ -419,15 +436,16 @@
           e.preventDefault();
         } else if (e.key === "Escape") closeInput();
       });
+
+      // フォーカス外れたとき
       timeInput.addEventListener("blur", () => {
         setTimeout(() => {
+          // すぐ閉じないようにしてる（Enter 押したときも blur になるので、confirmInput の後に closeInput されないように）
           if (!justOpened) closeInput();
         }, 160);
       });
 
-      // ══════════════════════════════════════════════
       //  アニメーションループ
-      // ══════════════════════════════════════════════
       // 地球が 30 秒で 1 周するよう速度を設定（視覚的スケール）
       const EARTH_VIS_MS = 30_000;
       const angularSpeed = PLANETS.map(
@@ -471,20 +489,20 @@
           const nx = Math.cos(angle);
           const ny = Math.sin(angle);
           const offset = p.sz + 24; // SVG ユニット
-          const sp = svgToWrap(px + nx * offset, py + ny * offset);
-          badges[i].style.left = sp.x + "px";
+          const sp = svgToWrap(px + nx * offset, py + ny * offset); // html座標に変換(惑星からまっすぐ外に、少し移動)
+          badges[i].style.left = sp.x + "px"; // バッジが惑星についてくる
           badges[i].style.top = sp.y + "px";
 
           // 日付・時刻を更新
-          const epochSec = toEpochSec(now);
-          const dateStr = formatPlanetDate(epochSec, p.rotH, p.orbDays);
-          const timeStr = formatTime(earthDateToPlanetDaySec(now, p.rotH));
+          const epochSec = toEpochSec(now); // 現在の地球時間
+          const dateStr = formatPlanetDate(epochSec, p.rotH, p.orbDays); // 惑星の日付
+          const timeStr = formatTime(earthDateToPlanetDaySec(now, p.rotH)); // 惑星の時刻
           badges[
             i
-          ].innerHTML = `<span style="font-size:9px;opacity:0.7;display:block;text-align:center">${dateStr}</span>${timeStr}`;
+          ].innerHTML = `<span style="font-size:9px;opacity:0.7;display:block;text-align:center">${dateStr}</span>${timeStr}`; // 表示更新
         });
 
-        requestAnimationFrame(frame);
+        requestAnimationFrame(frame); // 無限ループ
       }
 
       requestAnimationFrame(frame);
